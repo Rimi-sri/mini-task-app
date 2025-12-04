@@ -1,47 +1,78 @@
 const express = require("express");
-const fs = require("fs");
+const mongoose = require("mongoose");
 const cors = require("cors");
+require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-let tasks = [];
+// MongoDB Connection
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/mini-task-app";
 
-// Load tasks from file
-try {
-  tasks = JSON.parse(fs.readFileSync("tasks.json"));
-} catch {
-  tasks = [];
-}
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection failed:", err.message));
+
+// Task Schema
+const taskSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, default: "" },
+  completed: { type: Boolean, default: false },
+  timeSpent: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+const Task = mongoose.model("Task", taskSchema);
 
 // Get all tasks
-app.get("/tasks", (req, res) => {
-  res.json(tasks);
+app.get("/tasks", async (req, res) => {
+  try {
+    const tasks = await Task.find().sort({ createdAt: -1 });
+    res.json(tasks);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Add a task
-app.post("/tasks", (req, res) => {
-  const task = { id: Date.now(), ...req.body, completed: false };
-  tasks.push(task);
-  fs.writeFileSync("tasks.json", JSON.stringify(tasks));
-  res.json(task);
+app.post("/tasks", async (req, res) => {
+  try {
+    const task = new Task(req.body);
+    const savedTask = await task.save();
+    res.json(savedTask);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // Update a task
-app.put("/tasks/:id", (req, res) => {
-  const id = Number(req.params.id);
-  tasks = tasks.map((t) => (t.id === id ? { ...t, ...req.body } : t));
-  fs.writeFileSync("tasks.json", JSON.stringify(tasks));
-  res.json({ success: true });
+app.put("/tasks/:id", async (req, res) => {
+  try {
+    const updatedTask = await Task.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, updatedAt: new Date() },
+      { new: true }
+    );
+    res.json({ success: true, task: updatedTask });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // Delete a task
-app.delete("/tasks/:id", (req, res) => {
-  const id = Number(req.params.id);
-  tasks = tasks.filter((t) => t.id !== id);
-  fs.writeFileSync("tasks.json", JSON.stringify(tasks));
-  res.json({ success: true });
+app.delete("/tasks/:id", async (req, res) => {
+  try {
+    await Task.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
-app.listen(5000, () => console.log("Server running on port 5000"));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
