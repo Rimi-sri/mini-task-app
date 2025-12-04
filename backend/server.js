@@ -1,73 +1,88 @@
 const express = require("express");
-const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
 const cors = require("cors");
-require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/mini-task-app";
+// File path for tasks storage
+const tasksFile = path.join(__dirname, "tasks.json");
 
-mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection failed:", err.message));
+// Initialize tasks file if it doesn't exist
+if (!fs.existsSync(tasksFile)) {
+  fs.writeFileSync(tasksFile, JSON.stringify([]));
+}
 
-// Task Schema
-const taskSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, default: "" },
-  completed: { type: Boolean, default: false },
-  timeSpent: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
+// Helper function to read tasks
+const readTasks = () => {
+  try {
+    const data = fs.readFileSync(tasksFile, "utf-8");
+    return JSON.parse(data);
+  } catch (err) {
+    return [];
+  }
+};
 
-const Task = mongoose.model("Task", taskSchema);
+// Helper function to write tasks
+const writeTasks = (tasks) => {
+  fs.writeFileSync(tasksFile, JSON.stringify(tasks, null, 2));
+};
 
 // Get all tasks
-app.get("/tasks", async (req, res) => {
+app.get("/tasks", (req, res) => {
   try {
-    const tasks = await Task.find().sort({ createdAt: -1 });
-    res.json(tasks);
+    const tasks = readTasks();
+    res.json(tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // Add a task
-app.post("/tasks", async (req, res) => {
+app.post("/tasks", (req, res) => {
   try {
-    const task = new Task(req.body);
-    const savedTask = await task.save();
-    res.json(savedTask);
+    const tasks = readTasks();
+    const newTask = {
+      id: Date.now().toString(),
+      title: req.body.title,
+      description: req.body.description || "",
+      completed: false,
+      timeSpent: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    tasks.push(newTask);
+    writeTasks(tasks);
+    res.json(newTask);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
 // Update a task
-app.put("/tasks/:id", async (req, res) => {
+app.put("/tasks/:id", (req, res) => {
   try {
-    const updatedTask = await Task.findByIdAndUpdate(
-      req.params.id,
-      { ...req.body, updatedAt: new Date() },
-      { new: true }
-    );
-    res.json({ success: true, task: updatedTask });
+    const tasks = readTasks();
+    const index = tasks.findIndex((t) => t.id === req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+    tasks[index] = { ...tasks[index], ...req.body, updatedAt: new Date().toISOString() };
+    writeTasks(tasks);
+    res.json({ success: true, task: tasks[index] });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
 // Delete a task
-app.delete("/tasks/:id", async (req, res) => {
+app.delete("/tasks/:id", (req, res) => {
   try {
-    await Task.findByIdAndDelete(req.params.id);
+    let tasks = readTasks();
+    tasks = tasks.filter((t) => t.id !== req.params.id);
+    writeTasks(tasks);
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });

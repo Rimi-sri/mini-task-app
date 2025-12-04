@@ -85,17 +85,17 @@ export default function TaskItem({ task, loadTasks }) {
       </div>
 
       <div className="task-actions">
-        <button onClick={toggleTimer} className="btn small" style={{ background: isRunning ? "#ef4444" : "#10b981" }}>
-          {isRunning ? "Stop" : "Start"}
+        <button onClick={toggleTimer} className={`btn small ${isRunning ? "red" : "green"}`}>
+          {isRunning ? "⏹ Stop" : "▶ Start"}
         </button>
-        <button onClick={saveTime} className="btn small" style={{ background: "#3b82f6" }}>
-          Save
+        <button onClick={saveTime} className="btn small blue">
+          💾 Save
         </button>
-        <button onClick={resetTimer} className="btn small" style={{ background: "#f59e0b" }}>
-          Reset
+        <button onClick={resetTimer} className="btn small">
+          🔄 Reset
         </button>
         <button onClick={remove} className="btn small red">
-          Delete
+          🗑 Delete
         </button>
       </div>
     </div>
