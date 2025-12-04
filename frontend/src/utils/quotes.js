@@ -1,0 +1,36 @@
+export const motivationalQuotes = [
+  "You're doing great! Keep pushing forward.",
+  "Every task completed is a step towards success.",
+  "Believe in yourself - you've got this!",
+  "Progress, not perfection. Keep going!",
+  "Your effort today is your success tomorrow.",
+  "Stay focused, stay strong, stay positive.",
+  "Don't watch the clock; do what it does. Keep going.",
+  "You are capable of amazing things.",
+  "The only way to do great work is to love what you do.",
+  "Success is the sum of small efforts repeated day in and day out.",
+  "Motivation is what gets you started. Habit is what keeps you going.",
+  "Every expert was once a beginner.",
+  "You've already come so far. Don't stop now!",
+  "The future depends on what you do today.",
+  "Believe you can and you're halfway there.",
+  "Small progress is still progress.",
+  "You are stronger than you think.",
+  "This is your moment. Make it count.",
+  "Keep calm and complete your tasks.",
+  "Remember why you started.",
+  "Excellence is not an act but a habit.",
+  "You don't have to be perfect to be amazing.",
+  "Focus on being productive instead of busy.",
+  "Your dreams are worth the effort.",
+  "Take it one task at a time.",
+  "Celebrate every small victory.",
+  "You are capable of incredible things.",
+  "The only limit is the one you set for yourself.",
+  "Today is the perfect day to achieve your goals.",
+  "Your persistence will pay off.",
+];
+
+export const getRandomQuote = () => {
+  return motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+};
