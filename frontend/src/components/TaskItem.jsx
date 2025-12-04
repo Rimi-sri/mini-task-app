@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { api } from "../utils/api";
 
 export default function TaskItem({ task, loadTasks }) {
   const [timeSpent, setTimeSpent] = useState(task.timeSpent || 0);
@@ -24,11 +25,7 @@ export default function TaskItem({ task, loadTasks }) {
 
   const saveTime = async () => {
     try {
-      await fetch(`http://localhost:5000/tasks/${task.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ timeSpent }),
-      });
+      await api.updateTask(task.id, { timeSpent });
       setIsRunning(false);
       loadTasks();
     } catch (err) {
@@ -43,11 +40,7 @@ export default function TaskItem({ task, loadTasks }) {
 
   const toggle = async () => {
     try {
-      await fetch(`http://localhost:5000/tasks/${task.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: !task.completed }),
-      });
+      await api.updateTask(task.id, { completed: !task.completed });
       loadTasks();
     } catch (err) {
       console.error("Toggle failed:", err);
@@ -57,9 +50,7 @@ export default function TaskItem({ task, loadTasks }) {
   const remove = async () => {
     if (!window.confirm("Delete this task?")) return;
     try {
-      await fetch(`http://localhost:5000/tasks/${task.id}`, {
-        method: "DELETE",
-      });
+      await api.deleteTask(task.id);
       loadTasks();
     } catch (err) {
       console.error("Delete failed:", err);

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { api } from "../utils/api";
 
 export default function TaskForm({ loadTasks }) {
   const [title, setTitle] = useState("");
@@ -10,11 +11,7 @@ export default function TaskForm({ loadTasks }) {
     if (!trimmed) return;
 
     try {
-      await fetch("http://localhost:5000/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: trimmed, description: desc.trim() }),
-      });
+      await api.addTask(trimmed, desc.trim());
       setTitle("");
       setDesc("");
       loadTasks();
